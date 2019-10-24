@@ -3,7 +3,7 @@ Microsoft Visual Studio Solution File, Format Version 12.00
 # Visual Studio 15
 VisualStudioVersion = 15.0.28307.757
 MinimumVisualStudioVersion = 10.0.40219.1
-Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "AutoSummon", "AutoSummon.csproj", "{F563D03E-B952-424F-A64F-9AD24B5059E9}"
+Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "LansAutoSummon", "LansAutoSummon.csproj", "{F563D03E-B952-424F-A64F-9AD24B5059E9}"
 EndProject
 Global
 	GlobalSection(SolutionConfigurationPlatforms) = preSolution

@@ -2,6 +2,7 @@ using System.Reflection;
 using Terraria;
 using Terraria.ID;
 using Terraria.ModLoader;
+using static Terraria.ModLoader.ModContent;
 
 namespace LansAutoSummon
 {
@@ -32,7 +33,7 @@ namespace LansAutoSummon
 
 		public override void PostUpdate()
 		{
-			int inventoryslot = 9;
+			int inventoryslot = GetInstance<Config>().InventorySlot;
 			base.PostUpdate();
 			float minCount = 0;
 			for(int i=0; i<1000; i++)

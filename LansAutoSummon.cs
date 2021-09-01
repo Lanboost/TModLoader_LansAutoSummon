@@ -1,3 +1,4 @@
+using Microsoft.Xna.Framework;
 using System.Reflection;
 using Terraria;
 using Terraria.ID;
@@ -33,6 +34,7 @@ namespace LansAutoSummon
 
 		public override void PostUpdate()
 		{
+
 			int inventoryslot = GetInstance<Config>().InventorySlot;
 			base.PostUpdate();
 			float minCount = 0;
@@ -50,12 +52,34 @@ namespace LansAutoSummon
 				if (item.active && item.summon && !item.sentry)
 				{
 
-					
 
 					int selectedItem = this.player.selectedItem;
+					var oldControlUseItem = this.player.controlUseItem;
+					var oldreleaseUseItem = this.player.releaseUseItem;
+					var olditemAnimation = this.player.itemAnimation;
+					var olditemTime = this.player.itemTime;
+					var olditemAnimationMax = this.player.itemAnimationMax;
+					var olditemLocation = this.player.itemLocation;
+					var olditemRotation = this.player.itemRotation;
+					var olddirection = this.player.direction;
+					var oldtoolTime = this.player.toolTime;
+					var oldchannel = this.player.channel;
+					var oldattackCD = this.player.attackCD;
+
 					this.player.selectedItem = inventoryslot;
 
-					if (item.netID == 3531)
+					this.player.HeldItem.useTime = 0;
+					this.player.HeldItem.mana = 0;
+
+
+					this.player.controlUseItem = true;
+					this.player.releaseUseItem = true;
+					this.player.itemAnimation = 0;
+					this.player.ItemCheck(this.player.whoAmI);
+
+					this.player.itemAnimation = 2;
+
+					/*if (item.netID == 3531)
 					{
 							handleStardustDragon(item);
 					}
@@ -67,8 +91,27 @@ namespace LansAutoSummon
 
 						
 						Main.PlaySound(19, (int)this.player.position.X, (int)this.player.position.Y, 1, 1f, 0f);
-					}
+					}*/
 
+
+					//this.player.controlUseItem = false;
+					//this.player.releaseUseItem = false;
+					this.player.ItemCheck(this.player.whoAmI);
+					
+					
+					//ItemLoader.UseItem(this.player.HeldItem, this.player);
+					
+					this.player.controlUseItem = oldControlUseItem;
+					this.player.releaseUseItem = oldreleaseUseItem;
+					this.player.itemAnimation = olditemAnimation;
+					this.player.itemTime = olditemTime;
+					this.player.itemAnimationMax = olditemAnimationMax;
+					this.player.itemLocation = olditemLocation;
+					this.player.itemRotation = olditemRotation;
+					this.player.direction = olddirection;
+					this.player.toolTime = oldtoolTime;
+					this.player.channel = oldchannel;
+					this.player.attackCD = oldattackCD;
 					this.player.selectedItem = selectedItem;
 				}
 			}

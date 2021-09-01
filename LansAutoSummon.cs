@@ -68,6 +68,9 @@ namespace LansAutoSummon
 
 					this.player.selectedItem = inventoryslot;
 
+					var realUseTime = this.player.HeldItem.useTime;
+					var realMana = this.player.HeldItem.mana;
+
 					this.player.HeldItem.useTime = 0;
 					this.player.HeldItem.mana = 0;
 
@@ -78,29 +81,12 @@ namespace LansAutoSummon
 					this.player.ItemCheck(this.player.whoAmI);
 
 					this.player.itemAnimation = 2;
-
-					/*if (item.netID == 3531)
-					{
-							handleStardustDragon(item);
-					}
-					else
-					{
-
-						this.player.AddBuff(item.buffType, 3600, true);
-						var p = Projectile.NewProjectile(this.player.position.X, this.player.position.Y, 0, 0, item.shoot, item.damage, item.knockBack, this.player.whoAmI, 0f, 0f);
-
-						
-						Main.PlaySound(19, (int)this.player.position.X, (int)this.player.position.Y, 1, 1f, 0f);
-					}*/
-
-
-					//this.player.controlUseItem = false;
-					//this.player.releaseUseItem = false;
+					
 					this.player.ItemCheck(this.player.whoAmI);
-					
-					
-					//ItemLoader.UseItem(this.player.HeldItem, this.player);
-					
+
+					this.player.HeldItem.useTime = realUseTime;
+					this.player.HeldItem.mana = realMana;
+
 					this.player.controlUseItem = oldControlUseItem;
 					this.player.releaseUseItem = oldreleaseUseItem;
 					this.player.itemAnimation = olditemAnimation;

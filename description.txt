@@ -5,6 +5,9 @@ Source at: https://github.com/Lanboost/TModLoader_LansAutoSummon
 
 Changelog:
 
+v. 0.3.2:
+	- Fixed issue with other mods, when not fully running all item "CheckItem" ticks.
+
 v. 0.3.1:
 	- Added changelog!
 	- Fixed issue with multi projectile summons 

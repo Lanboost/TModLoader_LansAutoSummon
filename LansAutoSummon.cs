@@ -73,20 +73,28 @@ namespace LansAutoSummon
 						var realUseTime = this.Player.HeldItem.useTime;
 						var realMana = this.Player.HeldItem.mana;
 
-						this.Player.HeldItem.useTime = 0;
+						//this.Player.HeldItem.useTime = 0;
 						this.Player.HeldItem.mana = 0;
 
 
 						this.Player.controlUseItem = true;
-						this.Player.releaseUseItem = true;
+						//this.Player.releaseUseItem = true;
 						this.Player.itemAnimation = 0;
 						this.Player.ItemCheck(this.Player.whoAmI);
+						this.Player.controlUseItem = false;
+						while (this.Player.itemAnimation > 0)
+						{
+							//this.Player.releaseUseItem = true;
+							this.Player.ItemCheck(this.Player.whoAmI);
+						}
+						//this.Player.controlUseItem = true;
+						//this.Player.releaseUseItem = true;
+						//this.Player.ItemCheck(this.Player.whoAmI);
+						//this.Player.itemAnimation = 2;
 
-						this.Player.itemAnimation = 2;
+						//this.Player.ItemCheck(this.Player.whoAmI);
 
-						this.Player.ItemCheck(this.Player.whoAmI);
-
-						this.Player.HeldItem.useTime = realUseTime;
+						//this.Player.HeldItem.useTime = realUseTime;
 						this.Player.HeldItem.mana = realMana;
 
 						this.Player.controlUseItem = oldControlUseItem;

@@ -1,4 +1,6 @@
-Automatically summons whatever is in hotkey slot 9, perfect for lazy people!
+Automatically summons whatever is in hotkey slot 0 (configurable), perfect for lazy people!
+
+Source at: https://github.com/Lanboost/TModLoader_LansAutoSummon
 
 
 Changelog:

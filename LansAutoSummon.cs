@@ -16,6 +16,12 @@ namespace LansAutoSummon
 		{
 			inst = this;
         }
+
+		public override void Unload()
+		{
+			base.Unload();
+			inst = null;
+		}
 	}
 
 	public class FixPlayer : ModPlayer
@@ -23,146 +29,80 @@ namespace LansAutoSummon
 		public override void Initialize()
 		{
 			base.Initialize();
-
-			/*
-			Main.LocalPlayer.AddBuff(BuffID.BabySlime, 3600, true);
-
-			Projectile.NewProjectile(Main.LocalPlayer.position.X, Main.LocalPlayer.position.Y, 0, 0, ProjectileID.BabySlime, 9, 2.5f, Main.LocalPlayer.whoAmI, 0f, 0f);
-			Main.PlaySound(19, (int)Main.LocalPlayer.position.X, (int)Main.LocalPlayer.position.Y, 1, 1f, 0f);
-			*/
 		}
 
 		public override void PostUpdate()
 		{
-
 			int inventoryslot = GetInstance<Config>().InventorySlot;
 			base.PostUpdate();
 			float minCount = 0;
 			for(int i=0; i<1000; i++)
 			{
-				if(Main.projectile[i].active && Main.projectile[i].minion && Main.projectile[i].owner == this.player.whoAmI)
+				if(Main.projectile[i].active && Main.projectile[i].minion && Main.projectile[i].owner == this.Player.whoAmI)
 				{
 					minCount += Main.projectile[i].minionSlots;
 				}
 			}
-			
-			if (minCount < this.player.maxMinions) {
+			if (minCount < this.Player.maxMinions) {
 
-				var item = this.player.inventory[inventoryslot];
-				if (item.active && item.summon && !item.sentry)
-				{
+				var item = this.Player.inventory[inventoryslot];
+				var minion = false;
+				if (item.shoot > 0) {
+					Projectile obj = new Projectile();
+					obj.SetDefaults(item.shoot);
+					minion = obj.minion;
 
-
-					int selectedItem = this.player.selectedItem;
-					var oldControlUseItem = this.player.controlUseItem;
-					var oldreleaseUseItem = this.player.releaseUseItem;
-					var olditemAnimation = this.player.itemAnimation;
-					var olditemTime = this.player.itemTime;
-					var olditemAnimationMax = this.player.itemAnimationMax;
-					var olditemLocation = this.player.itemLocation;
-					var olditemRotation = this.player.itemRotation;
-					var olddirection = this.player.direction;
-					var oldtoolTime = this.player.toolTime;
-					var oldchannel = this.player.channel;
-					var oldattackCD = this.player.attackCD;
-
-					this.player.selectedItem = inventoryslot;
-
-					var realUseTime = this.player.HeldItem.useTime;
-					var realMana = this.player.HeldItem.mana;
-
-					this.player.HeldItem.useTime = 0;
-					this.player.HeldItem.mana = 0;
-
-
-					this.player.controlUseItem = true;
-					this.player.releaseUseItem = true;
-					this.player.itemAnimation = 0;
-					this.player.ItemCheck(this.player.whoAmI);
-
-					this.player.itemAnimation = 2;
-					
-					this.player.ItemCheck(this.player.whoAmI);
-
-					this.player.HeldItem.useTime = realUseTime;
-					this.player.HeldItem.mana = realMana;
-
-					this.player.controlUseItem = oldControlUseItem;
-					this.player.releaseUseItem = oldreleaseUseItem;
-					this.player.itemAnimation = olditemAnimation;
-					this.player.itemTime = olditemTime;
-					this.player.itemAnimationMax = olditemAnimationMax;
-					this.player.itemLocation = olditemLocation;
-					this.player.itemRotation = olditemRotation;
-					this.player.direction = olddirection;
-					this.player.toolTime = oldtoolTime;
-					this.player.channel = oldchannel;
-					this.player.attackCD = oldattackCD;
-					this.player.selectedItem = selectedItem;
-				}
-			}
-		}
-
-
-		public void handleStardustDragon(Item item)
-		{
-			var num81 = 0f;
-			var num82 = 0f;
-			var vector2 = this.player.position;
-			int num74 = 625;
-			int num184 = -1;
-			int num185 = -1;
-			for (int num186 = 0; num186 < 1000; num186++)
-			{
-				if (Main.projectile[num186].active && Main.projectile[num186].owner == Main.myPlayer)
-				{
-					if (num184 == -1 && Main.projectile[num186].type == 625)
+					if (item.active && minion && !item.sentry)
 					{
-						num184 = num186;
-					}
-					if (num185 == -1 && Main.projectile[num186].type == 628)
-					{
-						num185 = num186;
-					}
-					if (num184 != -1 && num185 != -1)
-					{
-						break;
+
+						int selectedItem = this.Player.selectedItem;
+						var oldControlUseItem = this.Player.controlUseItem;
+						var oldreleaseUseItem = this.Player.releaseUseItem;
+						var olditemAnimation = this.Player.itemAnimation;
+						var olditemTime = this.Player.itemTime;
+						var olditemAnimationMax = this.Player.itemAnimationMax;
+						var olditemLocation = this.Player.itemLocation;
+						var olditemRotation = this.Player.itemRotation;
+						var olddirection = this.Player.direction;
+						var oldtoolTime = this.Player.toolTime;
+						var oldchannel = this.Player.channel;
+						var oldattackCD = this.Player.attackCD;
+
+						this.Player.selectedItem = inventoryslot;
+
+						var realUseTime = this.Player.HeldItem.useTime;
+						var realMana = this.Player.HeldItem.mana;
+
+						this.Player.HeldItem.useTime = 0;
+						this.Player.HeldItem.mana = 0;
+
+
+						this.Player.controlUseItem = true;
+						this.Player.releaseUseItem = true;
+						this.Player.itemAnimation = 0;
+						this.Player.ItemCheck(this.Player.whoAmI);
+
+						this.Player.itemAnimation = 2;
+
+						this.Player.ItemCheck(this.Player.whoAmI);
+
+						this.Player.HeldItem.useTime = realUseTime;
+						this.Player.HeldItem.mana = realMana;
+
+						this.Player.controlUseItem = oldControlUseItem;
+						this.Player.releaseUseItem = oldreleaseUseItem;
+						this.Player.itemAnimation = olditemAnimation;
+						this.Player.itemTime = olditemTime;
+						this.Player.itemAnimationMax = olditemAnimationMax;
+						this.Player.itemLocation = olditemLocation;
+						this.Player.itemRotation = olditemRotation;
+						this.Player.direction = olddirection;
+						this.Player.toolTime = oldtoolTime;
+						this.Player.channel = oldchannel;
+						this.Player.attackCD = oldattackCD;
+						this.Player.selectedItem = selectedItem;
 					}
 				}
-			}
-			if (num184 == -1 && num185 == -1)
-			{
-				int num187 = Projectile.NewProjectile(vector2.X, vector2.Y, num81, num82, num74, item.damage, item.knockBack, this.player.whoAmI, 0f, 0f);
-				num187 = Projectile.NewProjectile(vector2.X, vector2.Y, num81, num82, num74 + 1, item.damage, item.knockBack, this.player.whoAmI, (float)num187, 0f);
-
-
-				int num188 = num187;
-				num187 = Projectile.NewProjectile(vector2.X, vector2.Y, num81, num82, num74 + 2, item.damage, item.knockBack, this.player.whoAmI, (float)num187, 0f);
-
-				Main.projectile[num188].localAI[1] = (float)num187;
-				num188 = num187;
-				num187 = Projectile.NewProjectile(vector2.X, vector2.Y, num81, num82, num74 + 3, item.damage, item.knockBack, this.player.whoAmI, (float)num187, 0f);
-
-
-				Main.projectile[num188].localAI[1] = (float)num187;
-			}
-			else if (num184 != -1 && num185 != -1)
-			{
-				int num189 = Projectile.NewProjectile(vector2.X, vector2.Y, num81, num82, num74 + 1, item.damage, item.knockBack, this.player.whoAmI, (float)Projectile.GetByUUID(Main.myPlayer, Main.projectile[num185].ai[0]), 0f);
-
-				int num190 = num189;
-				num189 = Projectile.NewProjectile(vector2.X, vector2.Y, num81, num82, num74 + 2, item.damage, item.knockBack, this.player.whoAmI, (float)num189, 0f);
-
-
-				Main.projectile[num190].localAI[1] = (float)num189;
-				Main.projectile[num190].netUpdate = true;
-				Main.projectile[num190].ai[1] = 1f;
-				Main.projectile[num189].localAI[1] = (float)num185;
-				Main.projectile[num189].netUpdate = true;
-				Main.projectile[num189].ai[1] = 1f;
-				Main.projectile[num185].ai[0] = (float)Main.projectile[num189].projUUID;
-				Main.projectile[num185].netUpdate = true;
-				Main.projectile[num185].ai[1] = 1f;
 			}
 		}
 	}

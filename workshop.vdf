@@ -1,0 +1,25 @@
+"workshopitem"
+{
+	"appid"		"1281930"
+	"contentfolder"		"C:/Users/Lanboost/Documents/My Games/Terraria/tModLoader/ModSources/LansAutoSummon/artifacts"
+    "previewfile" "C:/Users/Lanboost/Documents/My Games/Terraria/tModLoader/ModSources/LansAutoSummon/icon.png"
+	"visibility"		"0"
+	"title"		"Lan's Auto Summon"
+	"description"		"Automatically summons whatever is in hotkey slot 0 (configurable), perfect for lazy people!
+
+Source at: https://github.com/Lanboost/TModLoader_LansAutoSummon
+
+
+Changelog:
+
+v. 0.3.2:
+	- Fixed issue with other mods, when not fully running all item "CheckItem" ticks.
+
+v. 0.3.1:
+	- Added changelog!
+	- Fixed issue with multi projectile summons 
+		https://github.com/Lanboost/TModLoader_LansAutoSummon/issues/1
+"
+	"changenote"		"Version 2022.06.22"
+	"publishedfileid"		"2591167044"
+}

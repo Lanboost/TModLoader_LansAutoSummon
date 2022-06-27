@@ -33,7 +33,7 @@ namespace LansAutoSummon
 
 		public override void PostUpdate()
 		{
-			int inventoryslot = GetInstance<Config>().InventorySlot;
+			int inventoryslot = GetInstance<Config>().InventorySlot-1;
 			base.PostUpdate();
 			float minCount = 0;
 			for(int i=0; i<1000; i++)

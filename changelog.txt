@@ -1,7 +1,1 @@
-v. 0.3.2:
-	- Fixed issue with other mods, when not fully running all item "CheckItem" ticks.
-
-v. 0.3.1:
-	- Added changelog!
-	- Fixed issue with multi projectile summons 
-		https://github.com/Lanboost/TModLoader_LansAutoSummon/issues/1
+Reindex the inventory slots from 0-49 to 1-50 as it might seem like zero indexing is hard for non-programmers.

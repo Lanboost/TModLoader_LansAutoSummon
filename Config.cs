@@ -14,10 +14,10 @@ namespace LansAutoSummon
 		public override ConfigScope Mode => ConfigScope.ServerSide;
 
 
-		[DefaultValue(9)]
+		[DefaultValue(10)]
 		[Label("Inventoryslot to use summon item from")]
-		[Tooltip("Valid values are 0-49")]
-		[Range(0, 49)]
+		[Tooltip("Valid values are 1-50")]
+		[Range(1, 50)]
 		public int InventorySlot;
 
 	}

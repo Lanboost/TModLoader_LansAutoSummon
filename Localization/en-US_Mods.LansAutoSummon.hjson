@@ -1,0 +1,10 @@
+Configs: {
+	Config: {
+		DisplayName: Config
+
+		InventorySlot: {
+			Label: Inventoryslot to use summon item from
+			Tooltip: Valid values are 1-50
+		}
+	}
+}

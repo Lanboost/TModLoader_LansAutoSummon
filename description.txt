@@ -1,16 +1,25 @@
-Automatically summons whatever is in hotkey slot 0 (configurable), perfect for lazy people!
+Automatically summons a configuration of minions.
+
+NOTE SUMMONING ORDER
+
+Step one: The mods summons 1 of the "FILL" summons
+Step two: For each weapon summon the count of summons set, or fill all slots if weapon is set to fill
+
+Given the way terraria handles resummons etc of weapons, if you try to summon a minion when you already 
+are at max capacity, the FIRST minion will be overriden. This means if you set "count" > "maxMinions"
+you will start overriding the minions you had.
+
 
 Source at: https://github.com/Lanboost/TModLoader_LansAutoSummon
 
 
 Changelog:
+V. 2022.08.29:
+	- Added UI to support multiple weapons
+	- Now support summoning X amount of every weapon
+	- Added max summon retry, to fix bug #4
+
+	As these features are completely new expect some issues.
+
 v. 2022.06.27:
 	- Reindex the inventory slots from 0-49 to 1-50 as it might seem like zero indexing is hard for non-programmers.
-
-v. 0.3.2:
-	- Fixed issue with other mods, when not fully running all item "CheckItem" ticks.
-
-v. 0.3.1:
-	- Added changelog!
-	- Fixed issue with multi projectile summons 
-		https://github.com/Lanboost/TModLoader_LansAutoSummon/issues/1

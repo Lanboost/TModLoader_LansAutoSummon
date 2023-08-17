@@ -1,4 +1,7 @@
-V. 2023.08.15:
+V. 2023.08.17.1:
+	- Added slots for sentry items
+
+V. 2023.08.15.1:
 	- UI should now be movable
 	- UI Now displays more information
 	- UI no longers allow non-summoning weapons

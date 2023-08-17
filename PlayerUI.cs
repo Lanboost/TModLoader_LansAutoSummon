@@ -16,9 +16,6 @@ namespace LansAutoSummon
     public class PlayerUI : ModPlayer
     {
         bool showingUI = false;
-        
-        float displayMinionCount = 0;
-        int displayMaxMinionCount = 0;
 
         LansUILib.ui.LComponent panel;
         bool needRefresh = false;
@@ -28,18 +25,7 @@ namespace LansAutoSummon
         {
             base.Initialize();
             panelSettings.SetAnchor(LansUILib.ui.AnchorPosition.TopLeft);
-            panelSettings.SetSize(250, 250, 400, 400);
-        }
-
-        protected void RefreshMinions()
-        {
-            FixPlayer fixPlayer = null;
-            Main.LocalPlayer.TryGetModPlayer<FixPlayer>(out fixPlayer);
-            if(fixPlayer != null)
-            {
-                fixPlayer.CancelAllMinions();
-                fixPlayer.isSpawning = true;
-            }
+            panelSettings.SetSize(250, 250, 400, 600);
         }
 
         protected void createPanel()
@@ -58,128 +44,226 @@ namespace LansAutoSummon
 
 
             inner.Add(LansUILib.UIFactory.CreateText("Summon panel (Show with pet ui)", true));
-            inner.Add(LansUILib.UIFactory.CreateText("For summon order check description", true));
-
-
-            displayMinionCount = Player.GetModPlayer<FixPlayer>().lastMinionCount;
-            displayMaxMinionCount = Player.GetModPlayer<FixPlayer>().lastMaxCount;
-
-            inner.Add(LansUILib.UIFactory.CreateText($"Current Minion Slots: {displayMinionCount}", true));
-            inner.Add(LansUILib.UIFactory.CreateText($"Max Minion Slots: {displayMaxMinionCount}", true));
-
-            var scrollpanel = UIFactory.CreateScrollPanel();
-            scrollpanel.wrapper.GetLayout().Flex = 1;
-
-            //var recipePanel = LansUILib.UIFactory.CreatePanel("Recipe Panel", false, false);
-            var scrollContentPanel = scrollpanel.contentPanel;
-            scrollContentPanel.SetLayout(new LansUILib.ui.LayoutFlow(new bool[] { true, true }, new bool[] { false, false }, LayoutFlowType.Vertical, 0, 0, 0, 0, 10));
-            inner.Add(scrollpanel.wrapper);
-
-            var itemSlots = Player.GetModPlayer<FixPlayer>().summonSlots;
-            var emptySlot = Player.GetModPlayer<FixPlayer>().emptySlot;
-
-            foreach (var slot in itemSlots)
+            var player = Player.GetModPlayer<FixPlayer>();
             {
-                var recipePanelCurr = LansUILib.UIFactory.CreatePanel("Recipe Panel Current", false, false);
-                recipePanelCurr.MouseInteraction = false;
-                recipePanelCurr.SetLayout(new LansUILib.ui.LayoutFlow(new bool[] { true, true }, new bool[] { false, true }, LayoutFlowType.Horizontal, 3, 3, 3, 3, 5));
+                var displayMinionCount = player.minionCount.lastValue;
+                var displayMaxMinionCount = player.minionMaxCount.lastValue;
 
-                var itemSlotPanel = LansUILib.UIFactory.CreateItemSlot(slot.summonWeapon);
-                
-                recipePanelCurr.Add(itemSlotPanel);
+                inner.Add(LansUILib.UIFactory.CreateText($"Minion Slots: {displayMinionCount} / {displayMaxMinionCount}", true));
 
-                if (slot.fill)
+
+                var scrollpanel = UIFactory.CreateScrollPanel();
+                scrollpanel.wrapper.GetLayout().Flex = 1;
+
+                //var recipePanel = LansUILib.UIFactory.CreatePanel("Recipe Panel", false, false);
+                var scrollContentPanel = scrollpanel.contentPanel;
+                scrollContentPanel.SetLayout(new LansUILib.ui.LayoutFlow(new bool[] { true, true }, new bool[] { false, false }, LayoutFlowType.Vertical, 0, 0, 0, 0, 10));
+                inner.Add(scrollpanel.wrapper);
+
+                var inventory = Player.GetModPlayer<FixPlayer>().summonItems;
+                var itemSlots = inventory.slots;
+                var emptySlot = inventory.emptySlot;
+
+                foreach (var slot in itemSlots)
                 {
-                    recipePanelCurr.Add(UIFactory.CreateText("Fill", true));
-                    var fillButton = UIFactory.CreateButton("Unfill");
-                    fillButton.Panel.SetLayout(new LayoutSize(80, 30));
-                    fillButton.OnClicked += delegate (MouseState state)
+                    var recipePanelCurr = LansUILib.UIFactory.CreatePanel("Recipe Panel Current", false, false);
+                    recipePanelCurr.MouseInteraction = false;
+                    recipePanelCurr.SetLayout(new LansUILib.ui.LayoutFlow(new bool[] { true, true }, new bool[] { false, true }, LayoutFlowType.Horizontal, 3, 3, 3, 3, 5));
+
+                    var itemSlotPanel = LansUILib.UIFactory.CreateItemSlot(slot.summonWeapon);
+
+                    recipePanelCurr.Add(itemSlotPanel);
+
+                    if (slot.fill)
                     {
-                        slot.fill = false;
-                        needRefresh = true;
-                        RefreshMinions();
-                    };
-                    recipePanelCurr.Add(fillButton.Panel);
-                }
-                else
-                {
-                    recipePanelCurr.Add(UIFactory.CreateText(slot.count.ToString(), true));
-                    var minusButton = UIFactory.CreateButton("-1");
-                    minusButton.Panel.SetLayout(new LayoutSize(30, 30));
-                    minusButton.OnClicked += delegate (MouseState state)
-                    {
-                        slot.count -=1;
-                        if(slot.count <= 0)
+                        recipePanelCurr.Add(UIFactory.CreateText("Fill", true));
+                        var fillButton = UIFactory.CreateButton("Unfill");
+                        fillButton.Panel.SetLayout(new LayoutSize(80, 30));
+                        fillButton.OnClicked += delegate (MouseState state)
                         {
-                            slot.count = 1;
-                        }
-                        needRefresh = true;
-                        RefreshMinions();
-                    };
-                    recipePanelCurr.Add(minusButton.Panel);
-                    var plusButton = UIFactory.CreateButton("+1");
-                    plusButton.Panel.SetLayout(new LayoutSize(30, 30));
-                    plusButton.OnClicked += delegate (MouseState state)
+                            slot.fill = false;
+                            needRefresh = true;
+                            inventory.dirty = true;
+                        };
+                        recipePanelCurr.Add(fillButton.Panel);
+                    }
+                    else
                     {
-                        slot.count += 1;
-                        if (slot.count >= 100)
+                        recipePanelCurr.Add(UIFactory.CreateText(slot.count.ToString(), true));
+                        var minusButton = UIFactory.CreateButton("-1");
+                        minusButton.Panel.SetLayout(new LayoutSize(30, 30));
+                        minusButton.OnClicked += delegate (MouseState state)
                         {
-                            slot.count = 100;
-                        }
-                        needRefresh = true;
-                        RefreshMinions();
-                    };
-                    recipePanelCurr.Add(plusButton.Panel);
-                    var fillButton = UIFactory.CreateButton("Fill");
-                    fillButton.Panel.SetLayout(new LayoutSize(60, 30));
-                    fillButton.OnClicked += delegate (MouseState state)
+                            slot.count -= 1;
+                            if (slot.count <= 0)
+                            {
+                                slot.count = 1;
+                            }
+                            needRefresh = true;
+                            inventory.dirty = true;
+                        };
+                        recipePanelCurr.Add(minusButton.Panel);
+                        var plusButton = UIFactory.CreateButton("+1");
+                        plusButton.Panel.SetLayout(new LayoutSize(30, 30));
+                        plusButton.OnClicked += delegate (MouseState state)
+                        {
+                            slot.count += 1;
+                            if (slot.count >= 100)
+                            {
+                                slot.count = 100;
+                            }
+                            needRefresh = true;
+                            inventory.dirty = true;
+                        };
+                        recipePanelCurr.Add(plusButton.Panel);
+                        var fillButton = UIFactory.CreateButton("Fill");
+                        fillButton.Panel.SetLayout(new LayoutSize(60, 30));
+                        fillButton.OnClicked += delegate (MouseState state)
+                        {
+                            slot.fill = true;
+                            needRefresh = true;
+                            inventory.dirty = true;
+                        };
+                        recipePanelCurr.Add(fillButton.Panel);
+
+                    }
+
+
+                    var minionCount = "?";
+                    if (slot.summonWeapon.Item != null && !slot.summonWeapon.Item.IsAir)
                     {
-                        slot.fill = true;
-                        needRefresh = true;
-                        RefreshMinions();
-                    };
-                    recipePanelCurr.Add(fillButton.Panel);
+                        Projectile p = new Projectile();
+                        p.SetDefaults(slot.summonWeapon.Item.shoot);
+                        minionCount = "" + p.minionSlots;
+                    }
+                    recipePanelCurr.Add(UIFactory.CreateText($"Minion Slot Cost: {minionCount}", true));
 
+
+
+                    scrollContentPanel.Add(recipePanelCurr);
                 }
 
-
-                var minionCount = "?";
-                if (slot.summonWeapon.Item != null && !slot.summonWeapon.Item.IsAir)
                 {
-                    Projectile p = new Projectile();
-                    p.SetDefaults(slot.summonWeapon.Item.shoot);
-                    minionCount = "" + p.minionSlots;
+                    var itemSlotPanel = LansUILib.UIFactory.CreateItemSlot(emptySlot.summonWeapon, delegate (Item item)
+                    {
+                        if (item.shoot == ProjectileID.None)
+                        {
+                            return false;
+                        }
+
+                        Projectile p = new Projectile();
+                        p.SetDefaults(item.shoot);
+
+                        if (!p.minion)
+                        {
+                            return false;
+                        }
+                        if (p.sentry)
+                        {
+                            return false;
+                        }
+
+                        return true;
+                    });
+                    scrollContentPanel.Add(itemSlotPanel);
                 }
-                recipePanelCurr.Add(UIFactory.CreateText($"Minion Slot Cost: {minionCount}", true));
+
+                var settingsPanel = new LComponent("Settings");
+                settingsPanel.isMask = true;
+                inner.Add(settingsPanel);
+
+                //settingsPanel.SetMargins(15, 15, 15, 15);
+                settingsPanel.SetLayout(new LansUILib.ui.LayoutFlow(new bool[] { true, true }, new bool[] { false, false }, LayoutFlowType.Horizontal, 0, 0, 0, 0, 10));
 
 
+                var summonEnabled = Player.GetModPlayer<FixPlayer>().autoSummonEnabled ? "Disable Auto" : "Enable Auto";
 
-                scrollContentPanel.Add(recipePanelCurr);
+                var toggleAutoSpawn = UIFactory.CreateButton(summonEnabled);
+                toggleAutoSpawn.Panel.SetLayout(new LayoutSize(100, 30));
+                toggleAutoSpawn.OnClicked += delegate (MouseState state)
+                {
+                    Player.GetModPlayer<FixPlayer>().autoSummonEnabled = !Player.GetModPlayer<FixPlayer>().autoSummonEnabled;
+                    Player.GetModPlayer<FixPlayer>().tempSummonDisabled = false;
+                    needRefresh = true;
+                };
+                settingsPanel.Add(toggleAutoSpawn.Panel);
+
+                var summonButton = UIFactory.CreateButton("Summon");
+                summonButton.Panel.SetLayout(new LayoutSize(100, 30));
+                summonButton.OnClicked += delegate (MouseState state)
+                {
+                    Player.GetModPlayer<FixPlayer>().forceSummon = true;
+                    Player.GetModPlayer<FixPlayer>().tempSummonDisabled = false;
+                    needRefresh = true;
+                };
+                settingsPanel.Add(summonButton.Panel);
+
+                var desummonButton = UIFactory.CreateButton("De-Summon");
+                desummonButton.Panel.SetLayout(new LayoutSize(100, 30));
+                desummonButton.OnClicked += delegate (MouseState state)
+                {
+                    Player.GetModPlayer<FixPlayer>().tempSummonDisabled = true;
+                    Player.GetModPlayer<FixPlayer>().CancelAllMinions();
+                    needRefresh = true;
+                };
+                settingsPanel.Add(desummonButton.Panel);
             }
 
             {
-                var itemSlotPanel = LansUILib.UIFactory.CreateItemSlot(emptySlot.summonWeapon, delegate(Item item) { 
-                    if(item.shoot == ProjectileID.None)
-                    {
-                        return false;
-                    }
+                inner.Add(LansUILib.UIFactory.CreateText($"--- Sentry Weapons ---", true));
 
-                    Projectile p = new Projectile();
-                    p.SetDefaults(item.shoot);
-                    
-                    if(!p.minion)
-                    {
-                        return false;
-                    }
-                    if(p.sentry)
-                    {
-                        return false;
-                    }
+                var displayMinionCount = player.sentryCount.lastValue;
+                var displayMaxMinionCount = player.sentryMaxCount.lastValue;
 
-                    return true;
-                });
-                scrollContentPanel.Add(itemSlotPanel);
+                inner.Add(LansUILib.UIFactory.CreateText($"Sentry Slots: {displayMinionCount} / {displayMaxMinionCount}", true));
+
+                var scrollpanel = UIFactory.CreateScrollPanel();
+                scrollpanel.wrapper.GetLayout().Flex = 1;
+
+                //var recipePanel = LansUILib.UIFactory.CreatePanel("Recipe Panel", false, false);
+                var scrollContentPanel = scrollpanel.contentPanel;
+                scrollContentPanel.SetLayout(new LansUILib.ui.LayoutFlow(new bool[] { true, true }, new bool[] { false, false }, LayoutFlowType.Vertical, 0, 0, 0, 0, 10));
+                inner.Add(scrollpanel.wrapper);
+
+                var inventory = Player.GetModPlayer<FixPlayer>().sentryItems;
+                var itemSlots = inventory.slots;
+                var emptySlot = inventory.emptySlot;
+
+                foreach (var slot in itemSlots)
+                {
+                    var recipePanelCurr = LansUILib.UIFactory.CreatePanel("Recipe Panel Current", false, false);
+                    recipePanelCurr.MouseInteraction = false;
+                    recipePanelCurr.SetLayout(new LansUILib.ui.LayoutFlow(new bool[] { true, true }, new bool[] { false, true }, LayoutFlowType.Horizontal, 3, 3, 3, 3, 5));
+
+                    var itemSlotPanel = LansUILib.UIFactory.CreateItemSlot(slot.summonWeapon);
+
+                    recipePanelCurr.Add(itemSlotPanel);
+
+                    scrollContentPanel.Add(recipePanelCurr);
+                }
+
+                {
+                    var itemSlotPanel = LansUILib.UIFactory.CreateItemSlot(emptySlot.summonWeapon, delegate (Item item)
+                    {
+                        if (item.shoot == ProjectileID.None)
+                        {
+                            return false;
+                        }
+
+                        Projectile p = new Projectile();
+                        p.SetDefaults(item.shoot);
+
+                        if (!p.sentry)
+                        {
+                            return false;
+                        }
+
+                        return true;
+                    });
+                    scrollContentPanel.Add(itemSlotPanel);
+                }
             }
+
         }
 
         public override void PostUpdateBuffs()
@@ -187,9 +271,8 @@ namespace LansAutoSummon
             base.PostUpdateBuffs();
             if (!Main.dedServ && this.Player.whoAmI == Main.myPlayer)
             {
+                var player = Player.GetModPlayer<FixPlayer>();
                 var newState = showingUI;
-
-
 
                 if (Main.EquipPage == 2)
                 {
@@ -206,28 +289,44 @@ namespace LansAutoSummon
                     Main.EquipPageSelected = 2;
                 }
 
-                var itemSlots = Player.GetModPlayer<FixPlayer>().summonSlots;
-                var emptySlot = Player.GetModPlayer<FixPlayer>().emptySlot;
+                // update inventories
 
-
-                for (int i = itemSlots.Count - 1; i >= 0; i--)
+                var inventories = new ExpandingInventory[]
                 {
-                    if (itemSlots[i].summonWeapon == null || itemSlots[i].summonWeapon.Item.IsAir)
+                    player.summonItems,
+                    player.sentryItems,
+                    player.otherItems,
+                };
+
+                foreach (var inventory in inventories)
+                {
+                    var itemSlots = inventory.slots;
+                    var emptySlot = inventory.emptySlot;
+
+                    for (int i = itemSlots.Count - 1; i >= 0; i--)
                     {
-                        itemSlots.RemoveAt(i);
+                        if (itemSlots[i].summonWeapon == null || itemSlots[i].summonWeapon.Item.IsAir)
+                        {
+                            itemSlots.RemoveAt(i);
+                            needRefresh = true;
+                            inventory.dirty = true;
+                        }
+                    }
+                    if (emptySlot.summonWeapon != null && !emptySlot.summonWeapon.Item.IsAir)
+                    {
+                        itemSlots.Add(emptySlot);
+                        inventory.emptySlot = new SummonSlot();
                         needRefresh = true;
-                        RefreshMinions();
+                        inventory.dirty = true;
+                    }
+
+                    foreach (var slot in itemSlots)
+                    {
+                        slot.summonWeapon?.Update();
                     }
                 }
-                if (emptySlot.summonWeapon != null && !emptySlot.summonWeapon.Item.IsAir)
-                {
-                    itemSlots.Add(emptySlot);
-                    Player.GetModPlayer<FixPlayer>().emptySlot = new SummonSlot();
-                    needRefresh = true;
-                    RefreshMinions();
-                }
 
-                if(displayMinionCount != Player.GetModPlayer<FixPlayer>().lastMinionCount || displayMaxMinionCount != Player.GetModPlayer<FixPlayer>().lastMaxCount)
+                if(player.minionCount.Dirty || player.minionMaxCount.Dirty || player.sentryCount.Dirty || player.sentryMaxCount.Dirty)
                 {
                     needRefresh = true;
                 }
@@ -265,12 +364,6 @@ namespace LansAutoSummon
                     {
                         LansUILib.UISystem.Instance.Screen.Remove(panel);
                     }
-                }
-
-
-                foreach (var slot in itemSlots)
-                {
-                    slot.summonWeapon?.Update();
                 }
             }
         }

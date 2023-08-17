@@ -1,9 +1,13 @@
+using LansUILib;
 using LansUILib.ui;
 using Microsoft.Xna.Framework;
+using MonoMod.Cil;
+using ReLogic.Utilities;
 using System;
 using System.Collections.Generic;
 using System.Reflection;
 using Terraria;
+using Terraria.Audio;
 using Terraria.ID;
 using Terraria.ModLoader;
 using Terraria.ModLoader.IO;
@@ -15,10 +19,33 @@ namespace LansAutoSummon
     {
 
         public static LansAutoSummon inst;
+        public bool soundIsSentry = false;
 
         public LansAutoSummon()
         {
             inst = this;
+        }
+
+        public override void Load()
+        {
+            base.Load();
+
+            Terraria.Audio.IL_SoundPlayer.Play += DisableSoundIfSentry;
+        }
+
+        public void DisableSoundIfSentry(ILContext iLContext)
+        {
+            LansUILib.InjectUtils.InjectSkipOnBooleanWithReturnValue(iLContext, ReturnSoundIsSentry, ReturnInvalidSoundSlot);
+        }
+
+        public static bool ReturnSoundIsSentry()
+        {
+            return inst.soundIsSentry;
+        }
+
+        public static object ReturnInvalidSoundSlot()
+        {
+            return SlotId.Invalid;
         }
 
         public override void Unload()
@@ -28,32 +55,118 @@ namespace LansAutoSummon
         }
     }
 
-    public class FixPlayer : ModPlayer
+    public class ExpandingInventory
     {
-
-        public List<SummonSlot> summonSlots = new List<SummonSlot>();
+        public List<SummonSlot> slots = new List<SummonSlot>();
         public SummonSlot emptySlot = new SummonSlot();
 
+        public bool dirty;
+
+        protected string saveTag;
+
+        public ExpandingInventory(string saveTag)
+        {
+            this.saveTag = saveTag;
+        }
+
+        public void LoadData(TagCompound tag)
+        {
+            if (tag.ContainsKey(this.saveTag))
+            {
+                slots = (List<SummonSlot>)tag.GetList<SummonSlot>(this.saveTag);
+            }
+        }
+
+        public void SaveData(TagCompound tag)
+        {
+            tag[this.saveTag] = slots;
+        }
+    }
+
+    public class TrackValue<T>
+    {
+        public Func<T> valueFunc;
+
+        public T lastValue;
+        public bool Dirty = true;
+
+        public event Action<T> valueChanged;
+
+        public TrackValue(Func<T> valueFunc)
+        {
+            this.valueFunc = valueFunc;
+        }
+
+        public void Check()
+        {
+            Dirty = false;
+            var v = valueFunc();
+            if(!v.Equals(lastValue))
+            {
+                Dirty = true;
+                lastValue = v;
+                valueChanged?.Invoke(v);
+            }
+        }
+    }
+
+    public class FixPlayer : ModPlayer
+    {
+        public ExpandingInventory summonItems = new ExpandingInventory("summonSlots");
+        public ExpandingInventory sentryItems = new ExpandingInventory("sentrySlots");
+        public ExpandingInventory otherItems = new ExpandingInventory("otherSlots");
+
         public bool isSpawning = false;
-        public float lastMinionCount = 0;
-        public int lastMaxCount = 0;
+
+        public TrackValue<float> minionCount;
+        public TrackValue<int> minionMaxCount;
+
+        public TrackValue<int> sentryCount;
+        public TrackValue<int> sentryMaxCount;
+
+        public List<TrackValue<object>> trackValues = new List<TrackValue<object>>();
+
+        public bool autoSummonEnabled = true;
+        public bool tempSummonDisabled = false;
+        public bool forceSummon = false;
+
+        public int currentSentrySlotId = 0;
 
 
         public override void Initialize()
         {
             base.Initialize();
+
+            minionCount = new TrackValue<float>(getCurrentMinionCount);
+            minionMaxCount = new TrackValue<int>(delegate() { return Player.maxMinions; });
+            sentryCount = new TrackValue<int>(getCurrentSentryCount);
+            sentryMaxCount = new TrackValue<int>(delegate () { return Player.maxTurrets; });
         }
 
         public override void LoadData(TagCompound tag)
         {
             base.LoadData(tag);
-            summonSlots = (List<SummonSlot>)tag.GetList<SummonSlot>("summonSlots");
+
+            summonItems.LoadData(tag);
+            sentryItems.LoadData(tag);
+            otherItems.LoadData(tag);
+
+
+            if (tag.ContainsKey("autoSummon"))
+            {
+                autoSummonEnabled = tag.GetBool("autoSummon");
+            }
         }
 
         public override void SaveData(TagCompound tag)
         {
             base.SaveData(tag);
-            tag["summonSlots"] = summonSlots;
+
+            summonItems.SaveData(tag);
+            sentryItems.SaveData(tag);
+            otherItems.SaveData(tag);
+
+            tag["autoSummon"] = autoSummonEnabled;
         }
 
         protected float getCurrentMinionCount()
@@ -62,16 +175,27 @@ namespace LansAutoSummon
             for (int i = 0; i < 1000; i++)
             {
                 if (Main.projectile[i].active && Main.projectile[i].minion && Main.projectile[i].owner == this.Player.whoAmI)
-                {
+                {   
                     minCount += Main.projectile[i].minionSlots;
                 }
             }
             return minCount;
         }
 
+        protected int getCurrentSentryCount()
+        {
+            var turrets = 0;
+            for (int i = 0; i < 1000; i++)
+            {
+                if (Main.projectile[i].active && Main.projectile[i].WipableTurret && Main.projectile[i].owner == this.Player.whoAmI)
+                    turrets += 1;
+            }
+            return turrets;
+        }
+
         public void CancelAllMinions()
         {
-            for (int i = 0; i < 1000; i++)
+            for (int i = 0; i < Main.projectile.Length; i++)
             {
                 if (Main.projectile[i].active && Main.projectile[i].minion && Main.projectile[i].owner == this.Player.whoAmI)
                 {
@@ -82,12 +206,60 @@ namespace LansAutoSummon
 
         protected bool shouldSummon()
         {
+            // Do nothing if dead
             if (this.Player.dead)
+            {
+                Player.GetModPlayer<FixPlayer>().tempSummonDisabled = false;
+                return false;
+            }
+
+            // Do notthing if holding an item
+            if (Main.mouseItem != null && !Main.mouseItem.IsAir) {
+                return false;
+            }
+
+            if(forceSummon)
+            {
+                return true;
+            }
+
+            return autoSummonEnabled && !tempSummonDisabled && (summonItems.dirty || isSpawning || minionCount.Dirty || minionMaxCount.Dirty);
+        }
+
+        protected bool shouldSummonSentry()
+        {
+            // Do nothing if dead
+            if (this.Player.dead)
+            {
+                Player.GetModPlayer<FixPlayer>().tempSummonDisabled = false;
+                return false;
+            }
+
+            // Do notthing if holding an item
+            if (Main.mouseItem != null && !Main.mouseItem.IsAir)
             {
                 return false;
             }
-            return (Main.mouseItem == null || Main.mouseItem.IsAir) &&
-                (isSpawning || lastMaxCount != this.Player.maxMinions || lastMinionCount != getCurrentMinionCount());
+
+
+            // remove sentries to far away
+            for (int i = 0; i < 1000; i++)
+            {
+                if (Main.projectile[i].active && Main.projectile[i].WipableTurret)
+                {
+                    if(Vector2.DistanceSquared(Main.projectile[i].Center, Player.Center) > 16*50*16*50)
+                    {
+
+                        LansAutoSummon.inst.soundIsSentry = true;
+                        Main.projectile[i].Kill();
+
+                        LansAutoSummon.inst.soundIsSentry = false;
+                    }
+                }
+            }
+
+
+            return Player.maxTurrets != getCurrentSentryCount();
 
         }
 
@@ -95,8 +267,8 @@ namespace LansAutoSummon
         {
 
             var lastScreenPosition = Main.screenPosition + Vector2.Zero;
-            Main.screenPosition.X += Random.Shared.Next(0, 10) * 16 - 5 * 16;
-            Main.screenPosition.Y += Random.Shared.Next(0, 10) * 16 - 5 * 16;
+            Main.screenPosition.X = Player.Center.X - Main.MouseScreen.X + Random.Shared.Next(0, 10) * 16 - 5 * 16;
+            Main.screenPosition.Y = Player.Center.Y - Main.MouseScreen.Y + Random.Shared.Next(0, 10) * 16 - 5 * 16;
 
             var oldItem = this.Player.inventory[this.Player.selectedItem];
 
@@ -115,9 +287,11 @@ namespace LansAutoSummon
 
             var realUseTime = this.Player.HeldItem.useTime;
             var realMana = this.Player.HeldItem.mana;
+            var realSound = this.Player.HeldItem.UseSound;
 
             //this.Player.HeldItem.useTime = 0;
             this.Player.HeldItem.mana = 0;
+            this.Player.HeldItem.UseSound = null;
 
 
             this.Player.controlUseItem = true;
@@ -139,6 +313,7 @@ namespace LansAutoSummon
 
             //this.Player.HeldItem.useTime = realUseTime;
             this.Player.HeldItem.mana = realMana;
+            this.Player.HeldItem.UseSound = realSound;
 
             this.Player.controlUseItem = oldControlUseItem;
             this.Player.releaseUseItem = oldreleaseUseItem;
@@ -208,7 +383,7 @@ namespace LansAutoSummon
                     Projectile obj = new Projectile();
                     obj.SetDefaults(item.shoot);
 
-                    if (item.active && obj.minion && !item.sentry)
+                    if (item.active && (obj.minion|| obj.sentry)) //&& !item.sentry)
                     {
                         return true;
                     }
@@ -237,8 +412,10 @@ namespace LansAutoSummon
 
                 if (shouldSummon())
                 {
+                    forceSummon = false;
+                    summonItems.dirty = false;
                     CancelAllMinions();
-                    foreach (var summon in summonSlots)
+                    foreach (var summon in summonItems.slots)
                     {
                         if (summon.fill)
                         {
@@ -248,16 +425,32 @@ namespace LansAutoSummon
                     }
 
 
-                    foreach (var summon in summonSlots)
+                    foreach (var summon in summonItems.slots)
                     {
                         trySummon(summon.summonWeapon.Item, summon.count, summon.fill, 5);
                     }
 
                     isSpawning = false;
-                    lastMaxCount = this.Player.maxMinions;
-                    lastMinionCount = getCurrentMinionCount();
 
                 }
+
+                if(shouldSummonSentry())
+                {
+                    if(sentryItems.slots.Count > 0)
+                    {
+                        if(currentSentrySlotId >= sentryItems.slots.Count)
+                        {
+                            currentSentrySlotId = 0;
+                        }
+                        trySummon(sentryItems.slots[currentSentrySlotId].summonWeapon.Item, 1, false, 1);
+                        currentSentrySlotId++;
+                    }
+                }
+
+                minionCount.Check();
+                minionMaxCount.Check();
+                sentryCount.Check();
+                sentryMaxCount.Check();
             }
         }
     }

@@ -446,9 +446,9 @@ namespace LansAutoSummon
 
                 }
 
-                if(shouldSummonSentry())
+                if (sentryItems.slots.Count > 0)
                 {
-                    if(sentryItems.slots.Count > 0)
+                    if (shouldSummonSentry())
                     {
                         if(currentSentrySlotId >= sentryItems.slots.Count)
                         {

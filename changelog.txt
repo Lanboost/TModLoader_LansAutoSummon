@@ -1,4 +1,4 @@
-V. 2023.10.06.2:
+V. 2023.10.06.2 -> V. 2023.10.06.3:
 	- Fixed github issue !5, will no longer cancel sentry projectiles when spawning new minions
 
 V. 2023.10.06.1:

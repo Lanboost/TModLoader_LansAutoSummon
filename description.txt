@@ -14,6 +14,11 @@ Source at: https://github.com/Lanboost/TModLoader_LansAutoSummon
 
 
 Changelog:
+V. 2023.10.06.1:
+	- Fixed issue with items being replaced if you used them while mod tried to summon.
+		- AKA Mod will no longer summon while using an item, so constantly swining will prevent summoning.
+		- Special thanks to Mickmane for reporting the issue with reproduction steps.
+
 V. 2022.08.29:
 	- Added UI to support multiple weapons
 	- Now support summoning X amount of every weapon

@@ -218,7 +218,13 @@ namespace LansAutoSummon
                 return false;
             }
 
-            if(forceSummon)
+            // Do nothing if in middle of swing
+            if(this.Player.itemAnimation != 0)
+            {
+                return false;
+            }
+
+            if (forceSummon)
             {
                 return true;
             }
@@ -237,6 +243,12 @@ namespace LansAutoSummon
 
             // Do notthing if holding an item
             if (Main.mouseItem != null && !Main.mouseItem.IsAir)
+            {
+                return false;
+            }
+
+            // Do nothing if in middle of swing
+            if (this.Player.itemAnimation != 0)
             {
                 return false;
             }
@@ -269,9 +281,9 @@ namespace LansAutoSummon
             var lastScreenPosition = Main.screenPosition + Vector2.Zero;
             Main.screenPosition.X = Player.Center.X - Main.MouseScreen.X + Random.Shared.Next(0, 10) * 16 - 5 * 16;
             Main.screenPosition.Y = Player.Center.Y - Main.MouseScreen.Y + Random.Shared.Next(0, 10) * 16 - 5 * 16;
-
+            
             var oldItem = this.Player.inventory[this.Player.selectedItem];
-
+            
             this.Player.inventory[this.Player.selectedItem] = summonItem;
             var oldControlUseItem = this.Player.controlUseItem;
             var oldreleaseUseItem = this.Player.releaseUseItem;

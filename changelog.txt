@@ -1,3 +1,6 @@
+V. 2023.10.06.2:
+	- Fixed github issue !5, will no longer cancel sentry projectiles when spawning new minions
+
 V. 2023.10.06.1:
 	- Fixed issue with items being replaced if you used them while mod tried to summon.
 		- AKA Mod will no longer summon while using an item, so constantly swining will prevent summoning.

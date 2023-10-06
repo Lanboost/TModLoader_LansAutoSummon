@@ -1,6 +1,6 @@
 displayName = Lan's Auto Summon
 author = Lanboost
-version = 2023.10.06.1
+version = 2023.10.06.2
 homepage = https://github.com/Lanboost/TModLoader_LansAutoSummon
 modReferences = LansUILib
 includeSource = true

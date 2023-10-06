@@ -197,7 +197,7 @@ namespace LansAutoSummon
         {
             for (int i = 0; i < Main.projectile.Length; i++)
             {
-                if (Main.projectile[i].active && Main.projectile[i].minion && Main.projectile[i].owner == this.Player.whoAmI)
+                if (Main.projectile[i].active && Main.projectile[i].minion && Main.projectile[i].owner == this.Player.whoAmI && !Main.projectile[i].sentry)
                 {
                     Main.projectile[i].Kill();
                 }
